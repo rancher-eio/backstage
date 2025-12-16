@@ -81,12 +81,10 @@ $ docker build -t rancherlabs/custom-backstage:v0.0.X .
 $ docker push rancherlabs/custom-backstage:v0.0.X
 ```
 
-Update the image tag in your Flux HelmRelease to deploy the new version.
-
 ### Recommended Upgrade Frequency
-- **Monthly**: Check for updates and apply minor/patch versions
-- **As needed**: Apply security patches immediately
-- **Quarterly**: Review and apply major version updates
+- **Monthly**: check for updates and apply minor/patch versions
+- **As needed**: apply security patches immediately
+- **Quarterly**: review and apply major version updates
 
 ### Troubleshooting
 - If `yarn install` fails, ensure you're on Node 20: `nvm use 20`
