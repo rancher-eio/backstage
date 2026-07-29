@@ -12,19 +12,24 @@ $ corepack enable
 
 ## Local Development
 ```bash
-<<<<<<< Updated upstream
 # Install dependencies
-=======
-$ npx @backstage/create-app@latest
+$ yarn install
+
+# Start backend and frontend
+$ yarn start
 ```
 
+Visit http://localhost:3000
+
 ## Adding New Plugins
+
 Backstage has an extensive list of [existing plugins](https://backstage.io/plugins/) and each with its directions on how to install and configure it in backstage.
 The first plugin added to our app is the kubernetes plugin following the instructions [here](https://backstage.io/docs/features/kubernetes/installation) and modifying the code accordingly.
 
-## Building the App
+## Building & Deploying
 
 ### Dockerfile Customizations (Yarn 4 Fixes)
+
 The [standard Backstage Dockerfile](https://backstage.io/docs/deployment/docker/) failed to build so it was modified to support Yarn 4 (modern yarn). These were added to handle the modern package manager and resolve "permission denied" errors:
 
 - Corepack: Enabled to automatically detect and use the specific Yarn version defined in package.json.
@@ -34,6 +39,7 @@ The [standard Backstage Dockerfile](https://backstage.io/docs/deployment/docker/
 - Unified Cache: Optimized the build cache to speed up dependency installation.
 
 ```
+
 # Define cache location for Yarn 4 binaries
 ENV COREPACK_HOME=/home/node/.cache/corepack
 
@@ -47,6 +53,7 @@ RUN mkdir -p /home/node/.cache/corepack
 ```
 
 The image is built, tagged and pushed to the rancherlabs dockerhub repo:
+
 ```bash
 $ docker build -t rancherlabs/custom-backstage:v1.0.0 .
 $ docker push rancherlabs/custom-backstage:v1.0.0
@@ -54,52 +61,84 @@ $ docker push rancherlabs/custom-backstage:v1.0.0
 
 This image is referenced in the backstage helmrelease in the cluster's repository.
 
-## Upgrading the App
+## Upgrading Backstage
 
 ### Prerequisites
+
 Ensure you're using Node 18 or 20:
 ```bash
 $ nvm use 20
-$ node --version  # Should show v20.x.x
+$ node --version  # should show v20.x.x
 ```
 
 ### Update Backstage Packages
+
 Use Backstage's official upgrade tool to update all `@backstage/*` packages:
+
 ```bash
 $ npx @backstage/cli versions:bump
 ```
 
 This command will:
+
 - Check for updates to all Backstage packages
 - Update `package.json` and workspace packages
 - Show you the version changes
 - Provide a link to the upgrade helper for breaking changes
 
-### Install and Test
+### Install and Verify
+
 ```bash
 # Install updated dependencies
->>>>>>> Stashed changes
 $ yarn install
+
+#  Verify TypeScript compiles
+$ yarn tsc
 
 # Start backend and frontend
 $ yarn start
 ```
 
-Visit http://localhost:3000
+Check [upgrade helper](https://backstage.github.io/upgrade-helper/) for breaking changes.
 
 ## Building & Deploying
+
+The multi-arch image build and push is driven by [`just`](https://github.com/casey/just),
+reading the target repository and tag from `config.yaml`. To build and push in one step:
+
+```bash
+$ just
+```
+
+This runs `docker buildx build` for `linux/arm64,linux/amd64`, tags the image as
+`<target.repository>:<target.tag>` from `config.yaml`, and pushes it to the registry.
+
+To bump the version, edit `config.yaml`:
+
+```yaml
+target:
+  repository: docker.io/rancherlabs/custom-backstage
+  tag: v1.0.1
+```
+
+You can also override without editing the file:
+
+```bash
+$ TARGET_TAG=v1.0.2 just
+```
+
+Update the image tag in `infrastructure/backstage/helmrelease.yaml` to deploy.
+
+### Manual build & push (equivalent)
+
 ```bash
 # Build backend
 $ yarn workspace backend build
 
-# Build Docker image
-$ docker build -t rancherlabs/backstage:v1.45.0 .
-
-# Push to registry
-$ docker push rancherlabs/backstage:v1.45.0
+# Build and push Docker image
+$ docker buildx build --platform=linux/arm64,linux/amd64 \
+    -t rancherlabs/custom-backstage:v1.0.1 --push .
 ```
-
-Update image tag in `infrastructure/backstage/helmrelease.yaml` to deploy.
 
 ## Upgrading Backstage
 ```bash

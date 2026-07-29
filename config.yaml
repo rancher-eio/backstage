@@ -1,0 +1,3 @@
+target:
+  repository: docker.io/rancherlabs/custom-backstage # {"$imagepolicy": "backstage:custom-backstage:name"}
+  tag: v1.0.2
